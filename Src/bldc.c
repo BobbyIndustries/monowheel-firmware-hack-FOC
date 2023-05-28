@@ -226,13 +226,13 @@ void bldc_control(void) {
     uint8_t hall_vl = !(LEFT_HALL_V_PORT->IDR & LEFT_HALL_V_PIN);
     uint8_t hall_wl = !(LEFT_HALL_W_PORT->IDR & LEFT_HALL_W_PIN);
 
-    uint8_t current_pos = hall2pos[hall_ul][hall_vl][hall_wl];
-    if(current_pos != pos[0][0])
-      if(current_pos != pos[0][1]){
-        pos[0][1] = pos[0][0];
-        pos[0][0] = current_pos;
+    uint8_t current_posl = hall2pos[hall_ul][hall_vl][hall_wl];
+    if(current_posl != pos[0][0]){
+      if(current_posl != pos[0][1])
         way[0]++;
-      }
+      pos[0][1] = pos[0][0];
+      pos[0][0] = current_posl;
+    }
     /* Set motor inputs here */
     rtU_Left.b_motEna     = enableFin;
     rtU_Left.z_ctrlModReq = ctrlModReq;  
@@ -294,13 +294,13 @@ void bldc_control(void) {
     uint8_t hall_vr = !(RIGHT_HALL_V_PORT->IDR & RIGHT_HALL_V_PIN);
     uint8_t hall_wr = !(RIGHT_HALL_W_PORT->IDR & RIGHT_HALL_W_PIN);
 
-    uint8_t current_pos = hall2pos[hall_ur][hall_vr][hall_wr];
-    if(current_pos != pos[1][0])
-      if(current_pos != pos[1][1]){
-        pos[1][1] = pos[1][0];
-        pos[1][0] = current_pos;
+    uint8_t current_posr = hall2pos[hall_ur][hall_vr][hall_wr];
+    if(current_posr != pos[1][0]){
+      if(current_posr != pos[1][1])
         way[1]++;
-      }
+      pos[1][1] = pos[1][0];
+      pos[1][0] = current_posr;
+    }
 
     /* Set motor inputs here */
     rtU_Right.b_motEna      = enableFin;
