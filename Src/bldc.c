@@ -77,12 +77,6 @@ static uint8_t enableFin    = 0;
 static const uint16_t pwm_res  = 64000000 / 2 / PWM_FREQ; // = 2000
 
 static uint16_t offsetcount = 0;
-static uint32_t offsetrlA    = 0;
-static uint32_t offsetrlB    = 0;
-static uint32_t offsetrrB    = 0;
-static uint32_t offsetrrC    = 0;
-static uint32_t offsetdcl    = 0;
-static uint32_t offsetdcr    = 0;
 
 int16_t        batVoltage       = (400 * BAT_CELLS * BAT_CALIB_ADC) / BAT_CALIB_REAL_VOLTAGE;
 static int32_t batVoltageFixdt  = (400 * BAT_CELLS * BAT_CALIB_ADC) / BAT_CALIB_REAL_VOLTAGE << 16;  // Fixed-point filter output initialized at 400 V*100/cell = 4 V/cell converted to fixed-point
@@ -113,7 +107,42 @@ const uint8_t hall2pos[2][2][2] = {
 
 void nullFunc(){}  // Function for empty funktionpointer becasue Jump NULL != ret
 
+void bldc_start_calibration(){
+  mainCounter = 0;
+  offsetrlA    = 0;
+  offsetrlB    = 0;
+  offsetrrB    = 0;
+  offsetrrC    = 0;
+  offsetdcl    = 0;
+  offsetdcr    = 0;
+  uint8_t hall_ul = !(LEFT_HALL_U_PORT->IDR & LEFT_HALL_U_PIN);
+  uint8_t hall_vl = !(LEFT_HALL_V_PORT->IDR & LEFT_HALL_V_PIN);
+  uint8_t hall_wl = !(LEFT_HALL_W_PORT->IDR & LEFT_HALL_W_PIN);
+  pos[0][0] = pos[0][1] = hall2pos[hall_ul][hall_vl][hall_wl];
+  uint8_t hall_ur = !(RIGHT_HALL_U_PORT->IDR & RIGHT_HALL_U_PIN);
+  uint8_t hall_vr = !(RIGHT_HALL_V_PORT->IDR & RIGHT_HALL_V_PIN);
+  uint8_t hall_wr = !(RIGHT_HALL_W_PORT->IDR & RIGHT_HALL_W_PIN);
+  pos[1][0] = pos[1][1] = hall2pos[hall_ur][hall_vr][hall_wr];
+  timer_brushless = calibration_func;
+}
+
 static void calibration_func(){
+  uint8_t hall_ul = !(LEFT_HALL_U_PORT->IDR & LEFT_HALL_U_PIN);
+  uint8_t hall_vl = !(LEFT_HALL_V_PORT->IDR & LEFT_HALL_V_PIN);
+  uint8_t hall_wl = !(LEFT_HALL_W_PORT->IDR & LEFT_HALL_W_PIN);
+  uint8_t current_posl = hall2pos[hall_ul][hall_vl][hall_wl];
+
+
+  uint8_t hall_ur = !(RIGHT_HALL_U_PORT->IDR & RIGHT_HALL_U_PIN);
+  uint8_t hall_vr = !(RIGHT_HALL_V_PORT->IDR & RIGHT_HALL_V_PIN);
+  uint8_t hall_wr = !(RIGHT_HALL_W_PORT->IDR & RIGHT_HALL_W_PIN);
+  uint8_t current_posr = hall2pos[hall_ur][hall_vr][hall_wr];
+  //reset if motors are moving
+  if(current_posl != pos[0][0])
+    bldc_start_calibration();
+  if(current_posr != pos[1][0])
+    bldc_start_calibration();
+
   if(mainCounter < CALIBRATION_SAMPLES) {  // calibrate ADC offsets
     offsetrlA += adc_buffer.rlA;
     offsetrlB += adc_buffer.rlB;
@@ -143,11 +172,6 @@ static void calibration_func(){
 typedef void (*IsrPtr)();
 volatile IsrPtr timer_brushless = nullFunc;
 volatile IsrPtr buzzerFunc = nullFunc;
-
-void bldc_start_calibration(){
-  mainCounter = 0;
-  timer_brushless = calibration_func;
-}
 
 
 // =================================
