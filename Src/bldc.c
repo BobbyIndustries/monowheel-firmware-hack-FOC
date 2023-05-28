@@ -57,7 +57,7 @@ int16_t curR_phaB = 0, curR_phaC = 0, curR_DC = 0;
 
 volatile uint16_t way[2];
 
-volatile uint8_t pos[2][2]
+volatile uint8_t pos[2][2];
 
 volatile int pwml = 0;
 volatile int pwmr = 0;
@@ -180,7 +180,15 @@ volatile IsrPtr buzzerFunc = nullFunc;
 void DMA1_Channel1_IRQHandler() {
   DMA1->IFCR = DMA_IFCR_CTCIF1;
   mainCounter++;
+  static boolean_T OverrunFlag = false; //looks very ugly
+  /* Check for overrun */
+  if (OverrunFlag) {
+    return;
+  }
+  OverrunFlag = true;
   timer_brushless();
+    /* Indicate task complete */
+  OverrunFlag = false;
   buzzerFunc();
 
 
@@ -214,14 +222,6 @@ void DMA1_Channel1_IRQHandler() {
 void bldc_control(void) {
     /* Make sure to stop BOTH motors in case of an error */
   enableFin = enable && !rtY_Left.z_errCode && !rtY_Right.z_errCode;
-
-  static boolean_T OverrunFlag = false;
-
-  /* Check for overrun */
-  if (OverrunFlag) {
-    return;
-  }
-  OverrunFlag = true;
 
   // Get Left motor currents
   curL_phaA = (int16_t)(offsetrlA - adc_buffer.rlA);
@@ -357,8 +357,7 @@ void bldc_control(void) {
     RIGHT_TIM->RIGHT_TIM_W  = (uint16_t)CLAMP(wr + pwm_res / 2, pwm_margin, pwm_res-pwm_margin);
   // =================================================================
 
-  /* Indicate task complete */
-  OverrunFlag = false;
+
  
  // ###############################################################################
 
