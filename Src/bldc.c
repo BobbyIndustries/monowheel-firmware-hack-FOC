@@ -41,6 +41,8 @@ extern ExtU rtU_Left;                   /* External inputs */
 extern ExtY rtY_Left;                   /* External outputs */
 extern P    rtP_Left;
 
+
+extern P    rtP_Right;                     /* Block parameters (auto storage) */
 extern DW   rtDW_Right;                 /* Observable states */
 extern ExtU rtU_Right;                  /* External inputs */
 extern ExtY rtY_Right;                  /* External outputs */
@@ -52,6 +54,8 @@ extern uint8_t ctrlModReq;
 static int16_t curDC_max = (I_DC_MAX * A2BIT_CONV);
 int16_t curL_phaA = 0, curL_phaB = 0, curL_DC = 0;
 int16_t curR_phaB = 0, curR_phaC = 0, curR_DC = 0;
+
+uint16_t wayl = 0, wayr = 0;
 
 volatile int pwml = 0;
 volatile int pwmr = 0;
@@ -81,17 +85,34 @@ static uint32_t offsetdcr    = 0;
 int16_t        batVoltage       = (400 * BAT_CELLS * BAT_CALIB_ADC) / BAT_CALIB_REAL_VOLTAGE;
 static int32_t batVoltageFixdt  = (400 * BAT_CELLS * BAT_CALIB_ADC) / BAT_CALIB_REAL_VOLTAGE << 16;  // Fixed-point filter output initialized at 400 V*100/cell = 4 V/cell converted to fixed-point
 
-// =================================
-// DMA interrupt frequency =~ 16 kHz
-// =================================
-void DMA1_Channel1_IRQHandler(void) {
+const uint8_t hall2pos[2][2][2] = {
+  {
+    {
+      6,
+      2
+    },
+    {
+      4,
+      3
+    }
+  },
+  {
+    {
+      0,
+      1
+    },
+    {
+      5,
+      6
+    }
+  }
+};
 
-  DMA1->IFCR = DMA_IFCR_CTCIF1;
-  // HAL_GPIO_WritePin(LED_PORT, LED_PIN, 1);
-  // HAL_GPIO_TogglePin(LED_PORT, LED_PIN);
 
-  if(offsetcount < 2048) {  // calibrate ADC offsets
-    offsetcount++;
+void nullFunc(){}  // Function for empty funktionpointer becasue Jump NULL != ret
+
+static void calibration_func(){
+  if(mainCounter < CALIBRATION_SAMPLES) {  // calibrate ADC offsets
     offsetrlA += adc_buffer.rlA;
     offsetrlB += adc_buffer.rlB;
     offsetrrB += adc_buffer.rrB;
@@ -100,50 +121,42 @@ void DMA1_Channel1_IRQHandler(void) {
     offsetdcr += adc_buffer.dcr;
     return;
   }
-  else if(offsetcount == 2048){
-    offsetcount++;
+  else if(mainCounter == CALIBRATION_SAMPLES){
     offsetrlA += adc_buffer.rlA;
     offsetrlB += adc_buffer.rlB;
     offsetrrB += adc_buffer.rrB;
     offsetrrC += adc_buffer.rrC;
     offsetdcl += adc_buffer.dcl;
     offsetdcr += adc_buffer.dcr;
-    offsetrlA /= 2048;
-    offsetrlB /= 2048;
-    offsetrrB /= 2048;
-    offsetrrC /= 2048;
-    offsetdcl /= 2048;
-    offsetdcr /= 2048;
+    offsetrlA /= CALIBRATION_SAMPLES;
+    offsetrlB /= CALIBRATION_SAMPLES;
+    offsetrrB /= CALIBRATION_SAMPLES;
+    offsetrrC /= CALIBRATION_SAMPLES;
+    offsetdcl /= CALIBRATION_SAMPLES;
+    offsetdcr /= CALIBRATION_SAMPLES;
+    timer_brushless = bldc_control;
   }
+}
 
-  if (buzzerTimer % 1000 == 0) {  // Filter battery voltage at a slower sampling rate
-    filtLowPass32(adc_buffer.batt1, BAT_FILT_COEF, &batVoltageFixdt);
-    batVoltage = (int16_t)(batVoltageFixdt >> 16);  // convert fixed-point to integer
-  }
+typedef void (*IsrPtr)();
+volatile IsrPtr timer_brushless = nullFunc;
+volatile IsrPtr buzzerFunc = nullFunc;
 
-  // Get Left motor currents
-  curL_phaA = (int16_t)(offsetrlA - adc_buffer.rlA);
-  curL_phaB = (int16_t)(offsetrlB - adc_buffer.rlB);
-  curL_DC   = (int16_t)(offsetdcl - adc_buffer.dcl);
-  
-  // Get Right motor currents
-  curR_phaB = (int16_t)(offsetrrB - adc_buffer.rrB);
-  curR_phaC = (int16_t)(offsetrrC - adc_buffer.rrC);
-  curR_DC   = (int16_t)(offsetdcr - adc_buffer.dcr);
+void bldc_start_calibration(){
+  mainCounter = 0;
+  timer_brushless = calibration_func;
+}
 
-  // Disable PWM when current limit is reached (current chopping)
-  // This is the Level 2 of current protection. The Level 1 should kick in first given by I_MOT_MAX
-  if(ABS(curL_DC) > curDC_max || enable == 0) {
-    LEFT_TIM->BDTR &= ~TIM_BDTR_MOE;
-  } else {
-    LEFT_TIM->BDTR |= TIM_BDTR_MOE;
-  }
 
-  if(ABS(curR_DC)  > curDC_max || enable == 0) {
-    RIGHT_TIM->BDTR &= ~TIM_BDTR_MOE;
-  } else {
-    RIGHT_TIM->BDTR |= TIM_BDTR_MOE;
-  }
+// =================================
+// DMA interrupt frequency =~ 16 kHz
+// =================================
+void DMA1_Channel1_IRQHandler() {
+  DMA1->IFCR = DMA_IFCR_CTCIF1;
+  mainCounter++;
+  timer_brushless();
+  buzzerFunc();
+
 
   // Create square wave for buzzer
   buzzerTimer++;
@@ -162,17 +175,20 @@ void DMA1_Channel1_IRQHandler(void) {
       buzzerPrev = 0;
   }
 
-  // Adjust pwm_margin depending on the selected Control Type
-  if (rtP_Left.z_ctrlTypSel == FOC_CTRL) {
-    pwm_margin = 110;
-  } else {
-    pwm_margin = 0;
+
+
+  //HAL_GPIO_WritePin(LED_PORT, LED_PIN, 1);
+  //HAL_GPIO_WritePin(LED_PORT, LED_PIN, 0);
+  if (buzzerTimer % 1000 == 0) {  // Filter battery voltage at a slower sampling rate
+    filtLowPass32(adc_buffer.batt1, BAT_FILT_COEF, &batVoltageFixdt);
+    batVoltage = (int16_t)(batVoltageFixdt >> 16);  // convert fixed-point to integer
   }
+}
 
-  // ############################### MOTOR CONTROL ###############################
+void bldc_control(void) {
+    /* Make sure to stop BOTH motors in case of an error */
+  enableFin = enable && !rtY_Left.z_errCode && !rtY_Right.z_errCode;
 
-  int ul, vl, wl;
-  int ur, vr, wr;
   static boolean_T OverrunFlag = false;
 
   /* Check for overrun */
@@ -181,10 +197,28 @@ void DMA1_Channel1_IRQHandler(void) {
   }
   OverrunFlag = true;
 
-  /* Make sure to stop BOTH motors in case of an error */
-  enableFin = enable && !rtY_Left.z_errCode && !rtY_Right.z_errCode;
- 
-  // ========================= LEFT MOTOR ============================ 
+  // Get Left motor currents
+  curL_phaA = (int16_t)(offsetrlA - adc_buffer.rlA);
+  curL_phaB = (int16_t)(offsetrlB - adc_buffer.rlB);
+  curL_DC   = (int16_t)(offsetdcl - adc_buffer.dcl);
+  
+  // Disable PWM when current limit is reached (current chopping)
+  // This is the Level 2 of current protection. The Level 1 should kick in first given by I_MOT_MAX
+  if(ABS(curL_DC) > curDC_max || enable == 0) {
+    LEFT_TIM->BDTR &= ~TIM_BDTR_MOE;
+  } else {
+    LEFT_TIM->BDTR |= TIM_BDTR_MOE;
+  }
+
+  int ul, vl, wl;
+
+   // ========================= LEFT MOTOR ============================
+       // Adjust pwm_margin depending on the selected Control Type
+  if (rtP_Left.z_ctrlTypSel == FOC_CTRL) {
+    pwm_margin = 110;
+  } else {
+    pwm_margin = 0;
+  }
     // Get hall sensors values
     uint8_t hall_ul = !(LEFT_HALL_U_PORT->IDR & LEFT_HALL_U_PIN);
     uint8_t hall_vl = !(LEFT_HALL_V_PORT->IDR & LEFT_HALL_V_PIN);
@@ -220,9 +254,32 @@ void DMA1_Channel1_IRQHandler(void) {
     LEFT_TIM->LEFT_TIM_V    = (uint16_t)CLAMP(vl + pwm_res / 2, pwm_margin, pwm_res-pwm_margin);
     LEFT_TIM->LEFT_TIM_W    = (uint16_t)CLAMP(wl + pwm_res / 2, pwm_margin, pwm_res-pwm_margin);
   // =================================================================
+
+  // Get Right motor currents
+  curR_phaB = (int16_t)(offsetrrB - adc_buffer.rrB);
+  curR_phaC = (int16_t)(offsetrrC - adc_buffer.rrC);
+  curR_DC   = (int16_t)(offsetdcr - adc_buffer.dcr);
+
+  // Disable PWM when current limit is reached (current chopping)
+  // This is the Level 2 of current protection. The Level 1 should kick in first given by I_MOT_MAX
+
+  if(ABS(curR_DC)  > curDC_max || enable == 0) {
+    RIGHT_TIM->BDTR &= ~TIM_BDTR_MOE;
+  } else {
+    RIGHT_TIM->BDTR |= TIM_BDTR_MOE;
+  }
+
+  // ############################### MOTOR CONTROL ###############################
+  int ur, vr, wr;
   
 
   // ========================= RIGHT MOTOR ===========================  
+      // Adjust pwm_margin depending on the selected Control Type
+  if (rtP_Right.z_ctrlTypSel == FOC_CTRL) {
+    pwm_margin = 110;
+  } else {
+    pwm_margin = 0;
+  }
     // Get hall sensors values
     uint8_t hall_ur = !(RIGHT_HALL_U_PORT->IDR & RIGHT_HALL_U_PIN);
     uint8_t hall_vr = !(RIGHT_HALL_V_PORT->IDR & RIGHT_HALL_V_PIN);

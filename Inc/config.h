@@ -155,7 +155,8 @@
 #define I_MOT_MAX       20              // [A] Maximum single motor current limit
 #define I_DC_MAX        25              // [A] Maximum stage2 DC Link current limit for Commutation and Sinusoidal types (This is the final current protection. Above this value, current chopping is applied. To avoid this make sure that I_DC_MAX = I_MOT_MAX + 2A)
 #define N_MOT_MAX       2000            // [rpm] Maximum motor speed limit
-
+//Curremt calibration samples for Motor current reading
+#define CALIBRATION_SAMPLES 2048
 // Field Weakening / Phase Advance
 #define FIELD_WEAK_ENA  1               // [-] Field Weakening / Phase Advance enable flag: 0 = Disabled (default), 1 = Enabled
 #define FIELD_WEAK_MAX  10               // [A] Maximum Field Weakening D axis current (only for FOC). Higher current results in higher maximum speed. Up to 10A has been tested using 10" wheels.
