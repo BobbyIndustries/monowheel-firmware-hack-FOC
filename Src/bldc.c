@@ -55,7 +55,9 @@ static int16_t curDC_max = (I_DC_MAX * A2BIT_CONV);
 int16_t curL_phaA = 0, curL_phaB = 0, curL_DC = 0;
 int16_t curR_phaB = 0, curR_phaC = 0, curR_DC = 0;
 
-uint16_t wayl = 0, wayr = 0;
+volatile int16_t way[2];
+
+volatile uint8_t pos[2][2]
 
 volatile int pwml = 0;
 volatile int pwmr = 0;
@@ -224,6 +226,13 @@ void bldc_control(void) {
     uint8_t hall_vl = !(LEFT_HALL_V_PORT->IDR & LEFT_HALL_V_PIN);
     uint8_t hall_wl = !(LEFT_HALL_W_PORT->IDR & LEFT_HALL_W_PIN);
 
+    uint8_t current_pos = hall2pos[hall_ul][hall_vl][hall_wl];
+    if(current_pos != pos[0][0])
+      if(current_pos != pos[0][1]){
+        pos[0][1] = pos[0][0];
+        pos[0][0] = current_pos;
+        way[0]++;
+      }
     /* Set motor inputs here */
     rtU_Left.b_motEna     = enableFin;
     rtU_Left.z_ctrlModReq = ctrlModReq;  
@@ -284,6 +293,14 @@ void bldc_control(void) {
     uint8_t hall_ur = !(RIGHT_HALL_U_PORT->IDR & RIGHT_HALL_U_PIN);
     uint8_t hall_vr = !(RIGHT_HALL_V_PORT->IDR & RIGHT_HALL_V_PIN);
     uint8_t hall_wr = !(RIGHT_HALL_W_PORT->IDR & RIGHT_HALL_W_PIN);
+
+    uint8_t current_pos = hall2pos[hall_ur][hall_vr][hall_wr];
+    if(current_pos != pos[1][0])
+      if(current_pos != pos[1][1]){
+        pos[1][1] = pos[1][0];
+        pos[1][0] = current_pos;
+        way[1]++;
+      }
 
     /* Set motor inputs here */
     rtU_Right.b_motEna      = enableFin;
