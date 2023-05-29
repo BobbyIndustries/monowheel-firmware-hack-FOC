@@ -42,5 +42,6 @@ extern volatile adc_buf_t adc_buffer;
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
 
+
 #endif
 

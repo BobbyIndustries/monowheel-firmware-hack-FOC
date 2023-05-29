@@ -41,7 +41,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "eeprom.h"
-
+#include "util.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -50,8 +50,7 @@
 /* Global variable used to store variable value in read sequence */
 uint16_t DataVar = 0;
 
-/* Virtual address defined by the user: 0xFFFF value is prohibited */
-extern uint16_t VirtAddVarTab[NB_OF_VAR];
+
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/

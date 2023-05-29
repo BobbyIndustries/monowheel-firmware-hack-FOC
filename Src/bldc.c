@@ -27,25 +27,13 @@
 #include "setup.h"
 #include "config.h"
 #include "util.h"
+#include "BLDC_controller_data.h"
 
 // Matlab includes and defines - from auto-code generation
 // ###############################################################################
 #include "BLDC_controller.h"           /* Model's header file */
 #include "rtwtypes.h"
 
-extern RT_MODEL *const rtM_Left;
-extern RT_MODEL *const rtM_Right;
-
-extern DW   rtDW_Left;                  /* Observable states */
-extern ExtU rtU_Left;                   /* External inputs */
-extern ExtY rtY_Left;                   /* External outputs */
-extern P    rtP_Left;
-
-
-extern P    rtP_Right;                     /* Block parameters (auto storage) */
-extern DW   rtDW_Right;                 /* Observable states */
-extern ExtU rtU_Right;                  /* External inputs */
-extern ExtY rtY_Right;                  /* External outputs */
 // ###############################################################################
 
 static uint32_t offsetrlA    = 0;
@@ -57,7 +45,7 @@ static uint32_t offsetdcr    = 0;
 
 static int16_t pwm_margin;              /* This margin allows to have a window in the PWM signal for proper FOC Phase currents measurement */
 
-extern uint8_t ctrlModReq;
+
 static int16_t curDC_max = (I_DC_MAX * A2BIT_CONV);
 int16_t curL_phaA = 0, curL_phaB = 0, curL_DC = 0;
 int16_t curR_phaB = 0, curR_phaC = 0, curR_DC = 0;
@@ -68,8 +56,6 @@ volatile uint8_t pos[2][2];
 
 volatile int pwml = 0;
 volatile int pwmr = 0;
-
-extern volatile adc_buf_t adc_buffer;
 
 uint8_t buzzerFreq          = 0;
 uint8_t buzzerPattern       = 0;

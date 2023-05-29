@@ -142,5 +142,20 @@ extern uint8_t     inIdx_prev;
 extern InputStruct input1[];            // input structure
 extern InputStruct input2[];            // input structure
 
+extern uint8_t ctrlModReq;
+
+extern RT_MODEL *const rtM_Left;
+extern RT_MODEL *const rtM_Right;
+
+extern DW   rtDW_Left;                  /* Observable states */
+extern ExtU rtU_Left;                   /* External inputs */
+extern ExtY rtY_Left;                   /* External outputs */
+
+extern DW   rtDW_Right;                 /* Observable states */
+extern ExtU rtU_Right;                  /* External inputs */
+extern ExtY rtY_Right;                  /* External outputs */
+
+/* Virtual address defined by the user: 0xFFFF value is prohibited */
+extern uint16_t VirtAddVarTab[NB_OF_VAR];
 #endif
 
