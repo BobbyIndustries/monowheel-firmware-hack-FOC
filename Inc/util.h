@@ -22,7 +22,7 @@
 #define UTIL_H
 
 #include <stdint.h>
-
+#include "config.h"
 
 // Rx Structures USART
 #if defined(CONTROL_SERIAL_USART2) || defined(CONTROL_SERIAL_USART3)
@@ -127,6 +127,20 @@ typedef struct {
   uint8_t   b_multipleTap;
 } MultipleTap;
 void multipleTapDet(int16_t u, uint32_t timeNow, MultipleTap *x);
+
+#if defined(DEBUG_I2C_LCD) || defined(SUPPORT_LCD)
+  extern LCD_PCF8574_HandleTypeDef lcd;
+#endif
+
+extern int16_t speedAvg;                // Average measured speed
+extern int16_t speedAvgAbs;             // Average measured speed in absolute
+extern uint8_t timeoutFlgADC;           // Timeout Flag for for ADC Protection: 0 = OK, 1 = Problem detected (line disconnected or wrong ADC data)
+extern uint8_t timeoutFlgSerial;        // Timeout Flag for Rx Serial command: 0 = OK, 1 = Problem detected (line disconnected or wrong Rx data)
+
+extern uint8_t     inIdx;               // input index used for dual-inputs
+extern uint8_t     inIdx_prev;
+extern InputStruct input1[];            // input structure
+extern InputStruct input2[];            // input structure
 
 #endif
 

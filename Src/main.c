@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h> // for abs()
 #include "stm32f1xx_hal.h"
+#nclude "BLDC_controller_data.h"
 #include "defines.h"
 #include "setup.h"
 #include "config.h"
@@ -41,29 +42,12 @@ void SystemClock_Config(void);
 //------------------------------------------------------------------------
 // Global variables set externally
 //------------------------------------------------------------------------
-extern TIM_HandleTypeDef htim_left;
-extern TIM_HandleTypeDef htim_right;
-extern ADC_HandleTypeDef hadc1;
-extern ADC_HandleTypeDef hadc2;
-extern volatile adc_buf_t adc_buffer;
-#if defined(DEBUG_I2C_LCD) || defined(SUPPORT_LCD)
-  extern LCD_PCF8574_HandleTypeDef lcd;
-  extern uint8_t LCDerrorFlag;
-#endif
 
-extern UART_HandleTypeDef huart2;
-extern UART_HandleTypeDef huart3;
+
+
 
 volatile uint8_t uart_buf[200];
 
-// Matlab defines - from auto-code generation
-//---------------
-extern P    rtP_Left;                   /* Block parameters (auto storage) */
-extern P    rtP_Right;                  /* Block parameters (auto storage) */
-extern ExtY rtY_Left;                   /* External outputs */
-extern ExtY rtY_Right;                  /* External outputs */
-extern ExtU rtU_Left;                   /* External inputs */
-extern ExtU rtU_Right;                  /* External inputs */
 //---------------
 #ifdef CONTROL_ADC
   #define ADC_MID 2048
@@ -114,24 +98,8 @@ int PowXplusX(int cleaned_adc,int maximum_value)
 #endif
 
 
-extern uint8_t     inIdx;               // input index used for dual-inputs
-extern uint8_t     inIdx_prev;
-extern InputStruct input1[];            // input structure
-extern InputStruct input2[];            // input structure
 
-extern int16_t speedAvg;                // Average measured speed
-extern int16_t speedAvgAbs;             // Average measured speed in absolute
-extern volatile uint32_t timeoutCntGen; // Timeout counter for the General timeout (PPM, PWM, Nunchuk)
-extern volatile uint8_t  timeoutFlgGen; // Timeout Flag for the General timeout (PPM, PWM, Nunchuk)
-extern uint8_t timeoutFlgADC;           // Timeout Flag for for ADC Protection: 0 = OK, 1 = Problem detected (line disconnected or wrong ADC data)
-extern uint8_t timeoutFlgSerial;        // Timeout Flag for Rx Serial command: 0 = OK, 1 = Problem detected (line disconnected or wrong Rx data)
 
-extern volatile int pwml;               // global variable for pwm left. -1000 to 1000
-extern volatile int pwmr;               // global variable for pwm right. -1000 to 1000
-
-extern uint8_t enable;                  // global variable for motor enable
-
-extern int16_t batVoltage;              // global variable for battery voltage
 
 #if defined(SIDEBOARD_SERIAL_USART2)
 extern SerialSideboard Sideboard_L;

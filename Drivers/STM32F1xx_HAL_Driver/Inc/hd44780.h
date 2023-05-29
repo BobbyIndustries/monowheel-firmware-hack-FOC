@@ -290,5 +290,5 @@ LCD_RESULT LCD_StateWriteBit(LCD_PCF8574_HandleTypeDef* handle, uint8_t value, L
 void LCD_WaitForBusyFlag(LCD_PCF8574_HandleTypeDef* handle);
 
 #endif
-
+extern uint8_t LCDerrorFlag;
 #endif /* HD44780_H_ */

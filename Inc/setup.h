@@ -32,5 +32,15 @@ void MX_ADC2_Init(void);
 void UART2_Init(void);
 void UART3_Init(void);
 
+
+extern TIM_HandleTypeDef htim_left;
+extern TIM_HandleTypeDef htim_right;
+extern ADC_HandleTypeDef hadc1;
+extern ADC_HandleTypeDef hadc2;
+extern volatile adc_buf_t adc_buffer;
+
+extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef huart3;
+
 #endif
 
