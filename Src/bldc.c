@@ -48,6 +48,13 @@ extern ExtU rtU_Right;                  /* External inputs */
 extern ExtY rtY_Right;                  /* External outputs */
 // ###############################################################################
 
+static uint32_t offsetrlA    = 0;
+static uint32_t offsetrlB    = 0;
+static uint32_t offsetrrB    = 0;
+static uint32_t offsetrrC    = 0;
+static uint32_t offsetdcl    = 0;
+static uint32_t offsetdcr    = 0;
+
 static int16_t pwm_margin;              /* This margin allows to have a window in the PWM signal for proper FOC Phase currents measurement */
 
 extern uint8_t ctrlModReq;
@@ -76,7 +83,7 @@ static uint8_t enableFin    = 0;
 
 static const uint16_t pwm_res  = 64000000 / 2 / PWM_FREQ; // = 2000
 
-static uint16_t offsetcount = 0;
+static uint64_t mainCounter = 0;
 
 int16_t        batVoltage       = (400 * BAT_CELLS * BAT_CALIB_ADC) / BAT_CALIB_REAL_VOLTAGE;
 static int32_t batVoltageFixdt  = (400 * BAT_CELLS * BAT_CALIB_ADC) / BAT_CALIB_REAL_VOLTAGE << 16;  // Fixed-point filter output initialized at 400 V*100/cell = 4 V/cell converted to fixed-point
@@ -106,6 +113,13 @@ const uint8_t hall2pos[2][2][2] = {
 
 
 void nullFunc(){}  // Function for empty funktionpointer becasue Jump NULL != ret
+
+void bldc_control(void);
+static void calibration_func();
+
+typedef void (*IsrPtr)();
+volatile IsrPtr timer_brushless = nullFunc;
+volatile IsrPtr buzzerFunc = nullFunc;
 
 void bldc_start_calibration(){
   mainCounter = 0;
@@ -168,10 +182,6 @@ static void calibration_func(){
     timer_brushless = bldc_control;
   }
 }
-
-typedef void (*IsrPtr)();
-volatile IsrPtr timer_brushless = nullFunc;
-volatile IsrPtr buzzerFunc = nullFunc;
 
 
 // =================================
