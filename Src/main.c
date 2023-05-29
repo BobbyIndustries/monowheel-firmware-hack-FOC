@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h> // for abs()
 #include "stm32f1xx_hal.h"
-#nclude "BLDC_controller_data.h"
+#include "bldc.h"
 #include "defines.h"
 #include "setup.h"
 #include "config.h"
@@ -31,6 +31,7 @@
 #include "BLDC_controller.h"      /* BLDC's header file */
 #include "rtwtypes.h"
 #include "comms.h"
+#include "control.h"
 #include "crc32.h"
 
 #if defined(DEBUG_I2C_LCD) || defined(SUPPORT_LCD)

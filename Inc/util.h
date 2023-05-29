@@ -22,8 +22,9 @@
 #define UTIL_H
 
 #include <stdint.h>
+#include "BLDC_controller.h"
 #include "config.h"
-
+#include "eeprom.h"
 // Rx Structures USART
 #if defined(CONTROL_SERIAL_USART2) || defined(CONTROL_SERIAL_USART3)
   #ifdef CONTROL_IBUS
