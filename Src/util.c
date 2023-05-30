@@ -28,9 +28,13 @@
 #include "eeprom.h"
 #include "util.h"
 #include "BLDC_controller.h"
+#include "BLDC_controller_data.h"
 #include "rtwtypes.h"
 #include "comms.h"
 #include "crc32.h"
+#include "control.h"
+#include "main.h"
+#include "bldc.h"
 
 #if defined(DEBUG_I2C_LCD) || defined(SUPPORT_LCD)
 #include "hd44780.h"
@@ -46,28 +50,10 @@ extern I2C_HandleTypeDef hi2c2;
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
 
-extern int16_t batVoltage;
-extern uint8_t backwardDrive;
-extern uint8_t buzzerCount;             // global variable for the buzzer counts. can be 1, 2, 3, 4, 5, 6, 7...
-extern uint8_t buzzerFreq;              // global variable for the buzzer pitch. can be 1, 2, 3, 4, 5, 6, 7...
-extern uint8_t buzzerPattern;           // global variable for the buzzer pattern. can be 1, 2, 3, 4, 5, 6, 7...
-
-extern uint8_t enable;                  // global variable for motor enable
-
 extern uint8_t nunchuk_data[6];
 extern volatile uint32_t timeoutCntGen; // global counter for general timeout counter
 extern volatile uint8_t  timeoutFlgGen; // global flag for general timeout counter
 extern volatile uint32_t main_loop_counter;
-
-#if defined(CONTROL_PPM_LEFT) || defined(CONTROL_PPM_RIGHT)
-extern volatile uint16_t ppm_captured_value[PPM_NUM_CHANNELS+1];
-#endif
-
-#if defined(CONTROL_PWM_LEFT) || defined(CONTROL_PWM_RIGHT)
-extern volatile uint16_t pwm_captured_ch1_value;
-extern volatile uint16_t pwm_captured_ch2_value;
-#endif
-
 
 //------------------------------------------------------------------------
 // Global variables set here in util.c
@@ -79,7 +65,7 @@ RT_MODEL rtM_Right_;                    /* Real-time model */
 RT_MODEL *const rtM_Left  = &rtM_Left_;
 RT_MODEL *const rtM_Right = &rtM_Right_;
 
-extern P rtP_Left;                      /* Block parameters (auto storage) */
+// extern P rtP_Left;                      /* Block parameters (auto storage) */
 DW       rtDW_Left;                     /* Observable states */
 ExtU     rtU_Left;                      /* External inputs */
 ExtY     rtY_Left;                      /* External outputs */

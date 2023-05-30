@@ -170,5 +170,7 @@ extern SerialSideboard Sideboard_R;
   extern float    setDistance;
 #endif
 
+extern uint8_t ctrlModReqRaw;
+
 #endif
 

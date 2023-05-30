@@ -28,6 +28,7 @@
 #include "BLDC_controller.h"
 #include "util.h"
 #include "comms.h"
+#include "main.h"
 
 #if defined(DEBUG_SERIAL_PROTOCOL)
 #if defined(DEBUG_SERIAL_PROTOCOL) && (defined(DEBUG_SERIAL_USART2) || defined(DEBUG_SERIAL_USART3))
@@ -42,32 +43,6 @@
 
 
 #define MAX_PARAM_WATCH 15
-
-extern ExtY rtY_Left;                   /* External outputs */
-extern ExtU rtU_Left;                   /* External inputs */
-extern P    rtP_Left;
-
-extern ExtY rtY_Right;                  /* External outputs */
-extern ExtU rtU_Right;                      /* External inputs */
-extern P    rtP_Right;
-
-
-extern InputStruct input1[];            // input structure
-extern InputStruct input2[];            // input structure
-
-extern uint16_t VirtAddVarTab[NB_OF_VAR];
-extern int16_t speedAvg;                      // average measured speed
-extern int16_t speedAvgAbs;                   // average measured speed in absolute
-extern uint8_t ctrlModReqRaw;
-extern int16_t batVoltageCalib;
-extern int16_t board_temp_deg_c;
-extern int16_t left_dc_curr;
-extern int16_t right_dc_curr;
-extern int16_t dc_curr;
-extern int16_t cmdL; 
-extern int16_t cmdR; 
-
-
 
 enum commandTypes {READ,WRITE};
 // Function0 - Function with 0 parameter
