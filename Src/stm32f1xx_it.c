@@ -36,24 +36,10 @@
 #include "stm32f1xx_it.h"
 #include "defines.h"
 #include "config.h"
+#include "setup.h"
 #include "util.h"
 
-extern DMA_HandleTypeDef hdma_i2c2_rx;
-extern DMA_HandleTypeDef hdma_i2c2_tx;
-extern I2C_HandleTypeDef hi2c2;
-
-extern DMA_HandleTypeDef hdma_usart2_rx;
-extern DMA_HandleTypeDef hdma_usart2_tx;
-extern DMA_HandleTypeDef hdma_usart3_rx;
-extern DMA_HandleTypeDef hdma_usart3_tx;
-
-/* USER CODE BEGIN 0 */
-extern UART_HandleTypeDef huart2;
-extern UART_HandleTypeDef huart3;
-/* USER CODE END 0 */
-
 /* External variables --------------------------------------------------------*/
-
 
 /******************************************************************************/
 /*            Cortex-M3 Processor Interruption and Exception Handlers         */
@@ -192,7 +178,6 @@ void SysTick_Handler(void) {
 }
 
 #ifdef CONTROL_NUNCHUK
-extern I2C_HandleTypeDef hi2c2;
 void I2C1_EV_IRQHandler(void)
 {
   HAL_I2C_EV_IRQHandler(&hi2c2);

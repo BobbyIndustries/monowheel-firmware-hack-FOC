@@ -45,15 +45,6 @@
 //------------------------------------------------------------------------
 // Global variables set externally
 //------------------------------------------------------------------------
-extern volatile adc_buf_t adc_buffer;
-extern I2C_HandleTypeDef hi2c2;
-extern UART_HandleTypeDef huart2;
-extern UART_HandleTypeDef huart3;
-
-extern uint8_t nunchuk_data[6];
-extern volatile uint32_t timeoutCntGen; // global counter for general timeout counter
-extern volatile uint8_t  timeoutFlgGen; // global flag for general timeout counter
-extern volatile uint32_t main_loop_counter;
 
 //------------------------------------------------------------------------
 // Global variables set here in util.c
