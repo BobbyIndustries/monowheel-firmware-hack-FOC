@@ -100,28 +100,10 @@ int PowXplusX(int cleaned_adc,int maximum_value)
 
 
 
-
-
-#if defined(SIDEBOARD_SERIAL_USART2)
-extern SerialSideboard Sideboard_L;
-#endif
-#if defined(SIDEBOARD_SERIAL_USART3)
-extern SerialSideboard Sideboard_R;
-#endif
-#if (defined(CONTROL_PPM_LEFT) && defined(DEBUG_SERIAL_USART3)) || (defined(CONTROL_PPM_RIGHT) && defined(DEBUG_SERIAL_USART2))
-extern volatile uint16_t ppm_captured_value[PPM_NUM_CHANNELS+1];
-#endif
-#if (defined(CONTROL_PWM_LEFT) && defined(DEBUG_SERIAL_USART3)) || (defined(CONTROL_PWM_RIGHT) && defined(DEBUG_SERIAL_USART2))
-extern volatile uint16_t pwm_captured_ch1_value;
-extern volatile uint16_t pwm_captured_ch2_value;
-#endif
-
-
 //------------------------------------------------------------------------
 // Global variables set here in main.c
 //------------------------------------------------------------------------
 uint8_t backwardDrive;
-extern volatile uint32_t buzzerTimer;
 volatile uint32_t main_loop_counter;
 int16_t batVoltageCalib;         // global variable for calibrated battery voltage
 int16_t board_temp_deg_c;        // global variable for calibrated temperature in degrees Celsius
@@ -158,7 +140,6 @@ static uint8_t sideboard_leds_R;
 
 #ifdef VARIANT_TRANSPOTTER
   uint8_t  nunchuk_connected;
-  extern float    setDistance;  
 
   static uint8_t  checkRemote = 0;
   static uint16_t distance;

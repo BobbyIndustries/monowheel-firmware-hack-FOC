@@ -19,10 +19,6 @@ uint8_t  nunchuk_data[6] = {0};
 uint8_t i2cBuffer[2];
 nunchuk_state nunchukState = NUNCHUK_CONNECTING;
 
-extern I2C_HandleTypeDef hi2c2;
-extern DMA_HandleTypeDef hdma_i2c2_rx;
-extern DMA_HandleTypeDef hdma_i2c2_tx;
-
 #if defined(CONTROL_PPM_LEFT) || defined(CONTROL_PPM_RIGHT)
 uint16_t ppm_captured_value[PPM_NUM_CHANNELS + 1] = {500, 500};
 uint16_t ppm_captured_value_buffer[PPM_NUM_CHANNELS+1] = {500, 500};

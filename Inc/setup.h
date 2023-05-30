@@ -42,6 +42,9 @@ extern volatile adc_buf_t adc_buffer;
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
 
+extern I2C_HandleTypeDef hi2c2;
+extern DMA_HandleTypeDef hdma_i2c2_rx;
+extern DMA_HandleTypeDef hdma_i2c2_tx;
 
 #endif
 

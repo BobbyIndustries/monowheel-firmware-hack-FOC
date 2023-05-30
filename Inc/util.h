@@ -158,5 +158,17 @@ extern ExtY rtY_Right;                  /* External outputs */
 
 /* Virtual address defined by the user: 0xFFFF value is prohibited */
 extern uint16_t VirtAddVarTab[NB_OF_VAR];
+
+#if defined(SIDEBOARD_SERIAL_USART2)
+extern SerialSideboard Sideboard_L;
+#endif
+#if defined(SIDEBOARD_SERIAL_USART3)
+extern SerialSideboard Sideboard_R;
+#endif
+
+#ifdef VARIANT_TRANSPOTTER
+  extern float    setDistance;
+#endif
+
 #endif
 
