@@ -119,8 +119,8 @@ int16_t cmdR;                    // global variable for Right Command
 #if defined(FEEDBACK_SERIAL_USART2) || defined(FEEDBACK_SERIAL_USART3)
 typedef struct{
   uint16_t  start;
-  int16_t   cmd1;
-  int16_t   cmd2;
+  uint16_t   cmd1;
+  uint16_t   cmd2;
   int16_t   speedR_meas;
   int16_t   speedL_meas;
   int16_t   batVoltage;
@@ -523,8 +523,8 @@ int main(void) {
     #if defined(FEEDBACK_SERIAL_USART2) || defined(FEEDBACK_SERIAL_USART3)
       if (main_loop_counter % 4 == 0) {    // Send data periodically every 10 ms
         Feedback.start	        = (uint16_t)SERIAL_START_FRAME;
-        Feedback.cmd1           = (int16_t)input1[inIdx].cmd;
-        Feedback.cmd2           = (int16_t)input2[inIdx].cmd;
+        Feedback.cmd1           = way[0];
+        Feedback.cmd2           = way[1];
         #ifdef INVERT_R_DIRECTION
           Feedback.speedR_meas = (int16_t)rtY_Right.n_mot;
         #else

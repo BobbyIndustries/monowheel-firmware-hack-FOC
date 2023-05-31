@@ -50,7 +50,7 @@ static int16_t curDC_max = (I_DC_MAX * A2BIT_CONV);
 int16_t curL_phaA = 0, curL_phaB = 0, curL_DC = 0;
 int16_t curR_phaB = 0, curR_phaC = 0, curR_DC = 0;
 
-volatile uint16_t way[2];
+volatile uint16_t way[2] = {0,0};
 
 volatile uint8_t pos[2][2];
 
