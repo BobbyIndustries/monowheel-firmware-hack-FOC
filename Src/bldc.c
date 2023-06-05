@@ -249,7 +249,7 @@ void bldc_control(void) {
     uint8_t current_posl = hall2pos[hall_ul][hall_vl][hall_wl];
     if(current_posl != pos[0][0]){
       if(current_posl != pos[0][1])
-        way[0]++;
+        steps[0]++;
       pos[0][1] = pos[0][0];
       pos[0][0] = current_posl;
     }
@@ -317,7 +317,7 @@ void bldc_control(void) {
     uint8_t current_posr = hall2pos[hall_ur][hall_vr][hall_wr];
     if(current_posr != pos[1][0]){
       if(current_posr != pos[1][1])
-        way[1]++;
+        steps[1]++;
       pos[1][1] = pos[1][0];
       pos[1][0] = current_posr;
     }

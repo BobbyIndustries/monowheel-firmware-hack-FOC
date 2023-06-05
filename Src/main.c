@@ -208,6 +208,7 @@ int main(void) {
   HAL_ADC_Start(&hadc2);
 
   poweronMelody();
+  bldc_start_calibration();
   HAL_GPIO_WritePin(LED_PORT, LED_PIN, GPIO_PIN_SET);
   
   int32_t board_temp_adcFixdt = adc_buffer.temp << 16;  // Fixed-point filter output initialized with current ADC converted to fixed-point
@@ -523,8 +524,8 @@ int main(void) {
     #if defined(FEEDBACK_SERIAL_USART2) || defined(FEEDBACK_SERIAL_USART3)
       if (main_loop_counter % 4 == 0) {    // Send data periodically every 10 ms
         Feedback.start	        = (uint16_t)SERIAL_START_FRAME;
-        Feedback.steps0           = way[0];
-        Feedback.steps1           = way[1];
+        Feedback.steps0           = steps[0];
+        Feedback.steps1           = steps[1];
         #ifdef INVERT_R_DIRECTION
           Feedback.speedR_meas = (int16_t)rtY_Right.n_mot;
         #else
