@@ -223,30 +223,6 @@ int main(void) {
     }
   #endif
 
-  #ifdef MULTI_MODE_DRIVE
-    if (adc_buffer.l_tx2 > input1[0].min + 50 && adc_buffer.l_rx2 > input2[0].min + 50) {
-      drive_mode = 2;
-      max_speed = MULTI_MODE_DRIVE_M3_MAX;
-      rate = MULTI_MODE_DRIVE_M3_RATE;
-      rtP_Left.n_max = rtP_Right.n_max = MULTI_MODE_M3_N_MOT_MAX << 4;
-      rtP_Left.i_max = rtP_Right.i_max = (MULTI_MODE_M3_I_MOT_MAX * A2BIT_CONV) << 4;
-    } else if (adc_buffer.l_tx2 > input1[0].min + 50) {
-      drive_mode = 1;
-      max_speed = MULTI_MODE_DRIVE_M2_MAX;
-      rate = MULTI_MODE_DRIVE_M2_RATE;
-      rtP_Left.n_max = rtP_Right.n_max = MULTI_MODE_M2_N_MOT_MAX << 4;
-      rtP_Left.i_max = rtP_Right.i_max = (MULTI_MODE_M2_I_MOT_MAX * A2BIT_CONV) << 4;
-    } else {
-      drive_mode = 0;
-      max_speed = MULTI_MODE_DRIVE_M1_MAX;
-      rate = MULTI_MODE_DRIVE_M1_RATE;
-      rtP_Left.n_max = rtP_Right.n_max = MULTI_MODE_M1_N_MOT_MAX << 4;
-      rtP_Left.i_max = rtP_Right.i_max = (MULTI_MODE_M1_I_MOT_MAX * A2BIT_CONV) << 4;
-    }
-
-    printf("Drive mode %i selected: max_speed:%i acc_rate:%i \r\n", drive_mode, max_speed, rate);
-  #endif
-
   // Loop until button is released
   while(HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN)) { HAL_Delay(10); }
 
@@ -323,8 +299,14 @@ int main(void) {
           }
         }
       #endif
-
-      #ifndef USE_RAW_INPUT
+      
+      #if defined(USE_CUSTOM_FILTER)
+      steer = clean_adc_full(value_buffer(input1[inIdx].raw), 0);  // convert fixed-point to integer
+      speed = clean_adc_full(value_buffer(input2[inIdx].raw), 1);  // convert fixed-point to integer
+      #elif defined(USE_RAW_INPUT)
+      steer = input1[inIdx].raw;  // convert fixed-point to integer
+      speed = input2[inIdx].raw;  // convert fixed-point to integer
+      #else
       // ####### LOW-PASS FILTER #######
       rateLimiter16(input1[inIdx].cmd, rate, &steerRateFixdt);
       rateLimiter16(input2[inIdx].cmd, rate, &speedRateFixdt);
@@ -332,27 +314,6 @@ int main(void) {
       filtLowPass32(speedRateFixdt >> 4, FILTER, &speedFixdt);
       steer = (int16_t)(steerFixdt >> 16);  // convert fixed-point to integer
       speed = (int16_t)(speedFixdt >> 16);  // convert fixed-point to integer
-      #else
-      steer = input1[inIdx].raw;  // convert fixed-point to integer
-      speed = input2[inIdx].raw;  // convert fixed-point to integer
-      #endif
-      // ####### VARIANT_HOVERCAR #######
-      #ifdef VARIANT_HOVERCAR
-      if (inIdx == CONTROL_ADC) {               // Only use use implementation below if pedals are in use (ADC input)
-
-        #ifdef MULTI_MODE_DRIVE
-        if (speed >= max_speed) {
-          speed = max_speed;
-        }
-        #endif
-
-        if (!MultipleTapBrake.b_multipleTap) {  // Check driving direction
-          speed = steer + speed;                // Forward driving: in this case steer = Brake, speed = Throttle
-        } else {
-          speed = steer - speed;                // Reverse driving: in this case steer = Brake, speed = Throttle
-        }
-        steer = 0;                              // Do not apply steering to avoid side effects if STEER_COEFFICIENT is NOT 0
-      }
       #endif
 
       #if defined(TANK_STEERING) && !defined(VARIANT_HOVERCAR) && !defined(VARIANT_SKATEBOARD) 
@@ -376,101 +337,6 @@ int main(void) {
       #else
         pwml = cmdL;
       #endif
-    #endif
-
-    #ifdef VARIANT_TRANSPOTTER
-      distance    = CLAMP(input1[inIdx].cmd - 180, 0, 4095);
-      steering    = (input2[inIdx].cmd - 2048) / 2048.0;
-      distanceErr = distance - (int)(setDistance * 1345);
-
-      if (nunchuk_connected == 0) {
-        cmdL = cmdL * 0.8f + (CLAMP(distanceErr + (steering*((float)MAX(ABS(distanceErr), 50)) * ROT_P), -850, 850) * -0.2f);
-        cmdR = cmdR * 0.8f + (CLAMP(distanceErr - (steering*((float)MAX(ABS(distanceErr), 50)) * ROT_P), -850, 850) * -0.2f);
-        if (distanceErr > 0) {
-          enable = 1;
-        }
-        if (distanceErr > -300) {
-          #ifdef INVERT_R_DIRECTION
-            pwmr = cmdR;
-          #else
-            pwmr = -cmdR;
-          #endif
-          #ifdef INVERT_L_DIRECTION
-            pwml = -cmdL;
-          #else
-            pwml = cmdL;
-          #endif
-
-          if (checkRemote) {
-            if (!HAL_GPIO_ReadPin(LED_PORT, LED_PIN)) {
-              //enable = 1;
-            } else {
-              enable = 0;
-            }
-          }
-        } else {
-          enable = 0;
-        }
-        timeoutCntGen = 0;
-        timeoutFlgGen = 0;
-      }
-
-      if (timeoutFlgGen) {
-        pwml = 0;
-        pwmr = 0;
-        enable = 0;
-        #ifdef SUPPORT_LCD
-          LCD_SetLocation(&lcd,  0, 0); LCD_WriteString(&lcd, "Len:");
-          LCD_SetLocation(&lcd,  8, 0); LCD_WriteString(&lcd, "m(");
-          LCD_SetLocation(&lcd, 14, 0); LCD_WriteString(&lcd, "m)");
-        #endif
-        HAL_Delay(1000);
-        nunchuk_connected = 0;
-      }
-
-      if ((distance / 1345.0) - setDistance > 0.5 && (lastDistance / 1345.0) - setDistance > 0.5) { // Error, robot too far away!
-        enable = 0;
-        beepLong(5);
-        #ifdef SUPPORT_LCD
-          LCD_ClearDisplay(&lcd);
-          HAL_Delay(5);
-          LCD_SetLocation(&lcd, 0, 0); LCD_WriteString(&lcd, "Emergency Off!");
-          LCD_SetLocation(&lcd, 0, 1); LCD_WriteString(&lcd, "Keeper too fast.");
-        #endif
-        poweroff();
-      }
-
-      #ifdef SUPPORT_NUNCHUK
-        if (transpotter_counter % 500 == 0) {
-          if (nunchuk_connected == 0 && enable == 0) {
-              if(Nunchuk_Read() == NUNCHUK_CONNECTED) {
-                #ifdef SUPPORT_LCD
-                  LCD_SetLocation(&lcd, 0, 0); LCD_WriteString(&lcd, "Nunchuk Control");
-                #endif
-                nunchuk_connected = 1;
-	      }
-	    } else {
-              nunchuk_connected = 0;
-	    }
-          }
-        }   
-      #endif
-
-      #ifdef SUPPORT_LCD
-        if (transpotter_counter % 100 == 0) {
-          if (LCDerrorFlag == 1 && enable == 0) {
-
-          } else {
-            if (nunchuk_connected == 0) {
-              LCD_SetLocation(&lcd,  4, 0); LCD_WriteFloat(&lcd,distance/1345.0,2);
-              LCD_SetLocation(&lcd, 10, 0); LCD_WriteFloat(&lcd,setDistance,2);
-            }
-            LCD_SetLocation(&lcd,  4, 1); LCD_WriteFloat(&lcd,batVoltage, 1);
-            // LCD_SetLocation(&lcd, 11, 1); LCD_WriteFloat(&lcd,MAX(ABS(currentR), ABS(currentL)),2);
-          }
-        }
-      #endif
-      transpotter_counter++;
     #endif
 
     // ####### SIDEBOARDS HANDLING #######

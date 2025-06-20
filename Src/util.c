@@ -280,63 +280,26 @@ void Input_Init(void) {
     HAL_FLASH_Unlock();
     EE_Init();            /* EEPROM Init */
     EE_ReadVariable(VirtAddVarTab[0], &writeCheck);
-    if (writeCheck == FLASH_WRITE_KEY) {
-      #if defined(DEBUG_SERIAL_USART2) || defined(DEBUG_SERIAL_USART3)
-        printf("Using the configuration from EEprom\r\n");
-      #endif
+    #if defined(DEBUG_SERIAL_USART2) || defined(DEBUG_SERIAL_USART3)
+      printf("Using the configuration from config.h\r\n");
+    #endif
 
-      EE_ReadVariable(VirtAddVarTab[1] , &readVal); rtP_Left.i_max = rtP_Right.i_max = (int16_t)readVal;
-      EE_ReadVariable(VirtAddVarTab[2] , &readVal); rtP_Left.n_max = rtP_Right.n_max = (int16_t)readVal;
-      for (uint8_t i=0; i<INPUTS_NR; i++) {
-        EE_ReadVariable(VirtAddVarTab[ 3+8*i] , &readVal); input1[i].typ = (uint8_t)readVal;
-        EE_ReadVariable(VirtAddVarTab[ 4+8*i] , &readVal); input1[i].min = (int16_t)readVal;
-        EE_ReadVariable(VirtAddVarTab[ 5+8*i] , &readVal); input1[i].mid = (int16_t)readVal;
-        EE_ReadVariable(VirtAddVarTab[ 6+8*i] , &readVal); input1[i].max = (int16_t)readVal;
-        EE_ReadVariable(VirtAddVarTab[ 7+8*i] , &readVal); input2[i].typ = (uint8_t)readVal;
-        EE_ReadVariable(VirtAddVarTab[ 8+8*i] , &readVal); input2[i].min = (int16_t)readVal;
-        EE_ReadVariable(VirtAddVarTab[ 9+8*i] , &readVal); input2[i].mid = (int16_t)readVal;
-        EE_ReadVariable(VirtAddVarTab[10+8*i] , &readVal); input2[i].max = (int16_t)readVal;
-      
-        printf("Limits Input1: TYP:%i MIN:%i MID:%i MAX:%i\r\nLimits Input2: TYP:%i MIN:%i MID:%i MAX:%i\r\n",
-          input1[i].typ, input1[i].min, input1[i].mid, input1[i].max,
-          input2[i].typ, input2[i].min, input2[i].mid, input2[i].max);
+    for (uint8_t i=0; i<INPUTS_NR; i++) {
+      if (input1[i].typDef == 3) {  // If Input type defined is 3 (auto), identify the input type based on the values from config.h
+        input1[i].typ = checkInputType(input1[i].min, input1[i].mid, input1[i].max);
+      } else {
+        input1[i].typ = input1[i].typDef;
       }
-    } else {
-      #if defined(DEBUG_SERIAL_USART2) || defined(DEBUG_SERIAL_USART3)
-        printf("Using the configuration from config.h\r\n");
-      #endif
-
-      for (uint8_t i=0; i<INPUTS_NR; i++) {
-        if (input1[i].typDef == 3) {  // If Input type defined is 3 (auto), identify the input type based on the values from config.h
-          input1[i].typ = checkInputType(input1[i].min, input1[i].mid, input1[i].max);
-        } else {
-          input1[i].typ = input1[i].typDef;
-        }
-        if (input2[i].typDef == 3) {
-          input2[i].typ = checkInputType(input2[i].min, input2[i].mid, input2[i].max);
-        } else {
-          input2[i].typ = input2[i].typDef;
-        }
-        printf("Limits Input1: TYP:%i MIN:%i MID:%i MAX:%i\r\nLimits Input2: TYP:%i MIN:%i MID:%i MAX:%i\r\n",
-          input1[i].typ, input1[i].min, input1[i].mid, input1[i].max,
-          input2[i].typ, input2[i].min, input2[i].mid, input2[i].max);
+      if (input2[i].typDef == 3) {
+        input2[i].typ = checkInputType(input2[i].min, input2[i].mid, input2[i].max);
+      } else {
+        input2[i].typ = input2[i].typDef;
       }
+      printf("Limits Input1: TYP:%i MIN:%i MID:%i MAX:%i\r\nLimits Input2: TYP:%i MIN:%i MID:%i MAX:%i\r\n",
+        input1[i].typ, input1[i].min, input1[i].mid, input1[i].max,
+        input2[i].typ, input2[i].min, input2[i].mid, input2[i].max);
     }
     HAL_FLASH_Lock();
-  #endif
-
-  #ifdef VARIANT_TRANSPOTTER
-    enable = 1;
-
-    HAL_FLASH_Unlock();
-    EE_Init();            /* EEPROM Init */
-    EE_ReadVariable(VirtAddVarTab[0], &saveValue);
-    HAL_FLASH_Lock();
-
-    setDistance = saveValue / 1000.0;
-    if (setDistance < 0.2) {
-      setDistance = 1.0;
-    }
   #endif
 
   #if defined(DEBUG_I2C_LCD) || defined(SUPPORT_LCD)
