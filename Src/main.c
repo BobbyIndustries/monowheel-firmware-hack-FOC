@@ -68,6 +68,8 @@ uint32_t value_buffer(uint32_t in, int val)
   return (cur_buff_val_sum[val] / (BUFFERSIZE));
 }
 
+#define sign(x) (x == 0 ? 0 : (x < 0 ? -1 : 1))
+
 int clean_adc_full(uint32_t inval)
 {
   int outval = (int)(inval) - ADC_MID;
@@ -242,8 +244,7 @@ int main(void) {
 
     #ifndef VARIANT_TRANSPOTTER
       // ####### MOTOR ENABLING: Only if the initial input is very small (for SAFETY) #######
-      if (enable == 0 && !rtY_Left.z_errCode && !rtY_Right.z_errCode && 
-          ABS(input1[inIdx].cmd) < 50 && ABS(input2[inIdx].cmd) < 50){
+      if (enable == 0 && !rtY_Right.z_errCode && ABS(input2[inIdx].cmd) < 25){
         beepShort(6);                     // make 2 beeps indicating the motor enable
         beepShort(4); HAL_Delay(100);
         steerFixdt = speedFixdt = 0;      // reset filters
@@ -301,8 +302,8 @@ int main(void) {
       #endif
       
       #if defined(USE_CUSTOM_FILTER)
-      steer = clean_adc_full(value_buffer(input1[inIdx].raw), 0);  // convert fixed-point to integer
-      speed = clean_adc_full(value_buffer(input2[inIdx].raw), 1);  // convert fixed-point to integer
+      steer = clean_adc_full(value_buffer(input1[inIdx].raw, 0));  // convert fixed-point to integer
+      speed = clean_adc_full(value_buffer(input2[inIdx].raw, 1));  // convert fixed-point to integer
       #elif defined(USE_RAW_INPUT)
       steer = input1[inIdx].raw;  // convert fixed-point to integer
       speed = input2[inIdx].raw;  // convert fixed-point to integer
