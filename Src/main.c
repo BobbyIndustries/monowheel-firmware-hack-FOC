@@ -302,8 +302,8 @@ int main(void) {
       #endif
       
       #if defined(USE_CUSTOM_FILTER)
-      steer = clean_adc_full(value_buffer(input1[inIdx].raw, 0));  // convert fixed-point to integer
-      speed = clean_adc_full(value_buffer(input2[inIdx].raw, 1));  // convert fixed-point to integer
+      steer = sign(clean_adc_full(value_buffer(input1[inIdx].raw, 0)));  // get direction
+      speed = clean_adc_half(value_buffer(input2[inIdx].raw, 1)) * steer;  // convert fixed-point to integer
       #elif defined(USE_RAW_INPUT)
       steer = input1[inIdx].raw;  // convert fixed-point to integer
       speed = input2[inIdx].raw;  // convert fixed-point to integer
